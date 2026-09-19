@@ -7,6 +7,7 @@ import logging
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD, Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryNotReady
 
 from .api import ObiEnergyTrackerAPI
 from .const import CONF_BRIDGE_ID, CONF_COUNTRY, CONF_DEVICE_ID, DOMAIN
@@ -41,8 +42,7 @@ async def async_setup_entry(
 
     # Authenticate
     if not await api.async_login():
-        _LOGGER.error("Failed to authenticate with Obi EnergyTracker")
-        return False
+        raise ConfigEntryNotReady("Failed to authenticate with Obi EnergyTracker")
 
     # Create coordinator
     coordinator = ObiEnergyTrackerCoordinator(hass, api, entry)
