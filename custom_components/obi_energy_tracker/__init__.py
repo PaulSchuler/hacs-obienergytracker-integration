@@ -7,11 +7,12 @@ import logging
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD, Platform
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.exceptions import ConfigEntryNotReady
 
 from .api import ObiEnergyTrackerAPI
 from .const import CONF_BRIDGE_ID, CONF_COUNTRY, CONF_DEVICE_ID, DOMAIN
 from .coordinator import ObiEnergyTrackerCoordinator
+from .session import async_create_obi_session
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -27,8 +28,9 @@ async def async_setup_entry(
     """Set up obienergytracker from a config entry."""
     hass.data.setdefault(DOMAIN, {})
 
-    # Create API client
-    session = async_get_clientsession(hass)
+    # Create API client. A dedicated session is required: see session.py.
+    session = async_create_obi_session(hass)
+    entry.async_on_unload(session.close)
     api = ObiEnergyTrackerAPI(
         session=session,
         email=entry.data[CONF_EMAIL],
@@ -40,8 +42,7 @@ async def async_setup_entry(
 
     # Authenticate
     if not await api.async_login():
-        _LOGGER.error("Failed to authenticate with Obi EnergyTracker")
-        return False
+        raise ConfigEntryNotReady("Failed to authenticate with Obi EnergyTracker")
 
     # Create coordinator
     coordinator = ObiEnergyTrackerCoordinator(hass, api, entry)

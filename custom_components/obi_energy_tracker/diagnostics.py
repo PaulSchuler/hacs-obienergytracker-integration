@@ -8,11 +8,11 @@ from typing import Any
 from aiohttp import ClientError
 
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from . import ObiEnergyTrackerConfigEntry
 from .api import ObiEnergyTrackerAPI
 from .const import CONF_BRIDGE_ID, CONF_COUNTRY, CONF_DEVICE_ID
+from .session import async_create_obi_session
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ async def async_get_config_entry_diagnostics(
 ) -> dict[str, Any]:
     """Return diagnostics for a config entry."""
     # Create API client to test connection
-    session = async_get_clientsession(hass)
+    session = async_create_obi_session(hass)
     api = ObiEnergyTrackerAPI(
         session=session,
         email=config_entry.data.get("email", ""),
@@ -38,6 +38,8 @@ async def async_get_config_entry_diagnostics(
     except (OSError, ClientError) as err:
         _LOGGER.debug("Diagnostics login failed: %s", err)
         api_available = False
+    finally:
+        await session.close()
 
     return {
         "config_entry_data": {
