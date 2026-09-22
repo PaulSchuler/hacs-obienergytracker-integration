@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from datetime import datetime
 import logging
 from typing import Any
 
@@ -37,8 +37,6 @@ async def async_setup_entry(
         ObiLivePowerSensor(config_entry.runtime_data.live),
         ObiMeterReadingSensor(coordinator),
         ObiFeedInMeterReadingSensor(coordinator),
-        ObiCurrentPowerSensor(coordinator),
-        ObiCurrentFeedInPowerSensor(coordinator),
         ObiBatteryLevelSensor(coordinator),
         ObiIsOnlineSensor(coordinator),
         ObiConnectionStrengthSensor(coordinator),
@@ -223,166 +221,6 @@ class ObiLastRecordReceivedAtSensor(ObiDeviceValueSensorBase):
             return None
 
 
-# Candidate keys for the timestamp of a meter record. The backend is
-# undocumented and has used more than one spelling, so probe a few.
-_TIMESTAMP_KEYS = (
-    "timestamp",
-    "time",
-    "dateTime",
-    "datetime",
-    "date",
-    "measuredAt",
-    "recordedAt",
-    "receivedAt",
-    "createdAt",
-    "at",
-    "start",
-    "from",
-)
-
-# A derived power value is only meaningful if the two readings are reasonably
-# close together. Beyond this the device was offline and the "average" would
-# smear a long outage into a wrong momentary value.
-MAX_POWER_INTERVAL = timedelta(hours=1)
-
-# Below this the quantisation of the meter reading dominates the result.
-MIN_POWER_INTERVAL = timedelta(seconds=20)
-
-
-def _parse_record_time(record: dict[str, Any]) -> datetime | None:
-    """Return the timestamp of a meter record, if one can be found."""
-    for key in _TIMESTAMP_KEYS:
-        value = record.get(key)
-        if not isinstance(value, str):
-            continue
-        try:
-            parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
-        except ValueError:
-            continue
-        if parsed.tzinfo is None:
-            parsed = parsed.replace(tzinfo=UTC)
-        return parsed
-    return None
-
-
-def _extract_meter_series(
-    meter_data: Any, measure: str
-) -> list[tuple[datetime, float]]:
-    """Return the timestamped readings for a measure, oldest first.
-
-    Records without a parsable timestamp or a numeric value are dropped, so an
-    unexpected payload shape yields an empty series rather than a wrong value.
-    """
-    if not meter_data:
-        return []
-
-    records = meter_data if isinstance(meter_data, list) else [meter_data]
-    series: list[tuple[datetime, float]] = []
-
-    for record in records:
-        if not isinstance(record, dict):
-            continue
-        if record.get("measure") != measure:
-            # Legacy untagged shape carries the "energy" measure only.
-            if measure != "energy" or "measure" in record:
-                continue
-
-        value = record.get("value", record.get("energy"))
-        if not isinstance(value, (int, float)) or isinstance(value, bool):
-            continue
-
-        timestamp = _parse_record_time(record)
-        if timestamp is None:
-            continue
-
-        series.append((timestamp, float(value)))
-
-    series.sort(key=lambda item: item[0])
-    return series
-
-
-class ObiPowerSensorBase(ObiEnergySensorBase):
-    """Base sensor deriving momentary power from consecutive meter readings.
-
-    The backend exposes no power measure, so power is the slope of the meter
-    reading: the energy between the two most recent readings divided by the
-    time between them. The result is therefore an average over the device's
-    reporting interval, not an instantaneous value.
-    """
-
-    _attr_device_class = SensorDeviceClass.POWER
-    _attr_state_class = SensorStateClass.MEASUREMENT
-    _attr_native_unit_of_measurement = "W"
-    _attr_suggested_display_precision = 0
-    _measure: str
-
-    def _latest_interval(self) -> tuple[datetime, float, timedelta] | None:
-        """Return (end time, watts, interval) for the most recent pair."""
-        if not self.coordinator.data:
-            return None
-
-        series = _extract_meter_series(
-            self.coordinator.data.get("meter"), self._measure
-        )
-        if len(series) < 2:
-            return None
-
-        (start_time, start_value), (end_time, end_value) = series[-2], series[-1]
-        interval = end_time - start_time
-
-        if not MIN_POWER_INTERVAL <= interval <= MAX_POWER_INTERVAL:
-            _LOGGER.debug(
-                "%s: interval %s outside usable range, no power value",
-                type(self).__name__,
-                interval,
-            )
-            return None
-
-        delta = end_value - start_value
-        if delta < 0:
-            # Meter readings only increase; a drop means a reset or a reordered
-            # payload, neither of which yields a usable power value.
-            return None
-
-        watts = delta / (interval.total_seconds() / 3600)
-        return end_time, watts, interval
-
-    @property
-    def native_value(self) -> float | None:
-        """Return the derived power in watts."""
-        result = self._latest_interval()
-        if result is None:
-            return None
-        return round(result[1], 1)
-
-    @property
-    def extra_state_attributes(self) -> dict[str, Any] | None:
-        """Expose how the value was derived, so its resolution is visible."""
-        result = self._latest_interval()
-        if result is None:
-            return None
-
-        end_time, _, interval = result
-        return {
-            "measurement_interval_seconds": round(interval.total_seconds()),
-            "reading_timestamp": end_time.isoformat(),
-        }
-
-
-class ObiCurrentPowerSensor(ObiPowerSensorBase):
-    """Sensor for current power drawn from the grid."""
-
-    _attr_unique_id = "obi_current_power"
-    _attr_translation_key = "current_power"
-    _measure = "energy"
-
-
-class ObiCurrentFeedInPowerSensor(ObiPowerSensorBase):
-    """Sensor for current power fed into the grid."""
-
-    _attr_unique_id = "obi_current_feed_in_power"
-    _attr_translation_key = "current_feed_in_power"
-    _measure = "negative_energy"
 
 
 class ObiLivePowerSensor(SensorEntity):

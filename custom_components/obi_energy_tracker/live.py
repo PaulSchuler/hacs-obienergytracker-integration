@@ -6,7 +6,9 @@ readings over a websocket. Because that sensor runs on a battery, the upload
 interval must be put back to its idle value afterwards - reliably, including
 when Home Assistant shuts down or the connection dies.
 
-The protocol is documented in docs/live-mode-api.md.
+The stream itself is a websocket at api.obi.com that delivers frames of the
+shape {"event": "mqttMessage", "data": {"power": 506, "rssi": -75,
+"battery": 56}}, with the power value in watts.
 """
 
 from __future__ import annotations
@@ -27,6 +29,10 @@ _LOGGER = logging.getLogger(__name__)
 
 # Wait this long between reconnect attempts while live mode stays switched on.
 RECONNECT_DELAY = 5.0
+
+# Shorter pause after the server closed the socket cleanly. Without it, a
+# server that closes straight away would turn reconnecting into a hot loop.
+RECONNECT_PAUSE = 2.0
 
 # Give up after this many consecutive failures rather than hammering the API.
 MAX_FAILURES = 5
@@ -131,6 +137,10 @@ class ObiLiveMode:
                 try:
                     await self._async_listen(deadline)
                     failures = 0
+                    if self.is_on:
+                        # Reached only when the socket closed on its own, so
+                        # pace the reconnect instead of retrying immediately.
+                        await asyncio.sleep(RECONNECT_PAUSE)
                 except asyncio.CancelledError:
                     raise
                 except (OSError, aiohttp.ClientError) as err:

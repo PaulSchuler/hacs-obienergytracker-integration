@@ -36,12 +36,6 @@
       "feed_in_meter_reading": {
         "name": "Feed-in Meter Reading"
       },
-      "current_power": {
-        "name": "Current Power"
-      },
-      "current_feed_in_power": {
-        "name": "Current Feed-in Power"
-      },
       "battery_level": {
         "name": "Battery Level"
       },

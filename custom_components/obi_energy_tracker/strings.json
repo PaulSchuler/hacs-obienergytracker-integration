@@ -36,12 +36,6 @@
       "feed_in_meter_reading": {
         "name": "Zählerstand Netzeinspeisung"
       },
-      "current_power": {
-        "name": "Aktuelle Leistung Netzbezug"
-      },
-      "current_feed_in_power": {
-        "name": "Aktuelle Leistung Netzeinspeisung"
-      },
       "battery_level": {
         "name": "Batteriestand"
       },

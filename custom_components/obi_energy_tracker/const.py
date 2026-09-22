@@ -12,7 +12,8 @@ DEFAULT_COUNTRY = "DE"
 DEFAULT_SCAN_INTERVAL = 300  # 5 minutes
 
 # Live mode. The app switches the sensor's upload interval between these two
-# values; the backend accepts no others. See docs/live-mode-api.md.
+# values and the backend accepts no others: anything else is answered with
+# HTTP 400.
 LIVE_UPLOAD_INTERVAL = 2
 IDLE_UPLOAD_INTERVAL = 300
 
