@@ -1,0 +1,52 @@
+meta {
+  name: Probe live data
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{energyBaseUrl}}/historical-data/{{bridgeId}}/{{deviceId}}/{{granularity}}?duration={{duration}}&measures={{measures}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  duration: {{duration}}
+  measures: {{measures}}
+}
+
+headers {
+  Accept: application/vnd.obi.companion.energy-tracking.historical-record.v1+json
+  Accept-Encoding: gzip
+  User-Agent: app_client
+  Connection: Keep-Alive
+}
+
+script:pre-request {
+  // 15-Minuten-Fenster endend "jetzt" - kurz genug, um die echte Melde-Kadenz
+  // des Geräts zu sehen statt aggregierter Werte.
+  const start = new Date(Date.now() - 15 * 60 * 1000);
+  bru.setVar("duration", `${start.toISOString()}/PT15M`);
+
+  // Zum Suchen des Live-Endpunkts hier durchprobieren:
+  // meter | hourly | minutely | quarter-hourly | raw | live | latest | current
+  bru.setVar("granularity", bru.getVar("granularity") || "meter");
+
+  // Und hier: energy | negative_energy | power | active_power | current | voltage
+  bru.setVar("measures", bru.getVar("measures") || "energy,negative_energy");
+}
+
+docs {
+  Suchhilfe für die Live-Daten der heyOBI-App.
+
+  Die Integration kennt bisher nur `hourly` und `meter`, beide liefern Zählerstände
+  in Wh - keine momentane Leistung. Dieser Request variiert Granularität und
+  `measures`, um herauszufinden, ob das Backend eine feinere Auflösung oder ein
+  `power`-Measure kennt.
+
+  - `404` -> diese Route gibt es nicht
+  - `400` -> Route existiert, Parameter passen nicht
+  - `200` -> Treffer, Response-Shape ansehen
+
+  Systematischer und mit allen Kandidaten auf einmal: `tools/probe_obi_api.py`.
+}

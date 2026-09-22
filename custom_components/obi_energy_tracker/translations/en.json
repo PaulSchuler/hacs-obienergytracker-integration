@@ -1,53 +1,80 @@
 {
-    "config": {
-        "abort": {
-            "already_configured": "Account is already configured"
-        },
-        "create_entry": {
-            "default": "Successfully connected to OBI EnergyTracker to your home assistant instance"
-        },
-        "error": {
-            "connection_error": "Failed to connect to OBI backend service",
-            "invalid_auth": "Invalid email or password",
-            "no_devices": "No OBI EnergyTracker devices found in your account"
-        },
-        "step": {
-            "user": {
-                "data": {
-                    "country": "Country code",
-                    "email": "Email address",
-                    "password": "Password"
-                },
-                "data_description": {
-                    "country": "The country where your account is registered (e.g., DE)",
-                    "email": "Your OBI account email",
-                    "password": "Your OBI account password"
-                },
-                "description": "Enter your OBI account credentials",
-                "title": "Connect to (hey)OBI"
-            }
-        }
+  "config": {
+    "abort": {
+      "already_configured": "Account is already configured"
     },
-    "entity": {
-        "sensor": {
-            "meter_reading": {
-                "name": "Meter Reading"
-            },
-            "feed_in_meter_reading": {
-                "name": "Feed-in Meter Reading"
-            },
-            "battery_level": {
-                "name": "Battery Level"
-            },
-            "is_online": {
-                "name": "Online Status"
-            },
-            "connection_strength": {
-                "name": "Connection Strength"
-            },
-            "last_record_received_at": {
-                "name": "Last Record Received At"
-            }
-        }
+    "create_entry": {
+      "default": "Successfully connected to OBI EnergyTracker to your home assistant instance"
+    },
+    "error": {
+      "connection_error": "Failed to connect to OBI backend service",
+      "invalid_auth": "Invalid email or password",
+      "no_devices": "No OBI EnergyTracker devices found in your account"
+    },
+    "step": {
+      "user": {
+        "data": {
+          "country": "Country code",
+          "email": "Email address",
+          "password": "Password"
+        },
+        "data_description": {
+          "country": "The country where your account is registered (e.g., DE)",
+          "email": "Your OBI account email",
+          "password": "Your OBI account password"
+        },
+        "description": "Enter your OBI account credentials",
+        "title": "Connect to (hey)OBI"
+      }
     }
+  },
+  "entity": {
+    "sensor": {
+      "meter_reading": {
+        "name": "Meter Reading"
+      },
+      "feed_in_meter_reading": {
+        "name": "Feed-in Meter Reading"
+      },
+      "current_power": {
+        "name": "Current Power"
+      },
+      "current_feed_in_power": {
+        "name": "Current Feed-in Power"
+      },
+      "battery_level": {
+        "name": "Battery Level"
+      },
+      "is_online": {
+        "name": "Online Status"
+      },
+      "connection_strength": {
+        "name": "Connection Strength"
+      },
+      "last_record_received_at": {
+        "name": "Last Record Received At"
+      },
+      "live_power": {
+        "name": "Live Power"
+      }
+    },
+    "switch": {
+      "live_mode": {
+        "name": "Live Mode"
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Live mode",
+        "data": {
+          "live_timeout": "Timeout (s)"
+        },
+        "data_description": {
+          "live_timeout": "Seconds after which live mode switches itself off. 0 means no limit - the sensor then uploads every two seconds indefinitely and the battery drains accordingly."
+        }
+      }
+    }
+  }
 }
