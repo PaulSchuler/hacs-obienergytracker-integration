@@ -34,7 +34,7 @@ async def async_setup_entry(
     coordinator = config_entry.runtime_data
 
     sensors: list[SensorEntity] = [
-        ObiLivePowerSensor(config_entry.runtime_data.live),
+        ObiLivePowerSensor(coordinator.live),
         ObiMeterReadingSensor(coordinator),
         ObiFeedInMeterReadingSensor(coordinator),
         ObiBatteryLevelSensor(coordinator),
@@ -221,13 +221,11 @@ class ObiLastRecordReceivedAtSensor(ObiDeviceValueSensorBase):
             return None
 
 
-
-
 class ObiLivePowerSensor(SensorEntity):
     """Momentary power from the live websocket.
 
-    Unlike the derived power sensors this is a real measurement, but it only
-    has a value while the live mode switch is on.
+    Only has a value while the live mode switch is on; the rest of the time
+    the entity reports itself as unavailable.
     """
 
     _attr_has_entity_name = True

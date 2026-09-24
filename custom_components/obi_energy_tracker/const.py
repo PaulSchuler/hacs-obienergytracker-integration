@@ -12,15 +12,13 @@ DEFAULT_COUNTRY = "DE"
 DEFAULT_SCAN_INTERVAL = 300  # 5 minutes
 
 # Live mode. The app switches the sensor's upload interval between these two
-# values and the backend accepts no others: anything else is answered with
-# HTTP 400.
+# values and the backend accepts no others: anything else gives HTTP 400.
 LIVE_UPLOAD_INTERVAL = 2
 IDLE_UPLOAD_INTERVAL = 300
 
 # The sensor is battery powered and uploads every two seconds while live mode
 # runs, so it switches itself off again after this many seconds.
-CONF_LIVE_TIMEOUT = "live_timeout"
-DEFAULT_LIVE_TIMEOUT = 600
+LIVE_TIMEOUT = 600
 
 # Data attributes
 ATTR_BRIDGE_ID = "bridge_id"

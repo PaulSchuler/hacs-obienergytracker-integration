@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Callable
+import json
 import logging
 from typing import Any
 
@@ -40,6 +41,21 @@ MAX_FAILURES = 5
 # Longest a silent websocket may block the loop. Bounding the receive is what
 # lets the timeout fire even when no frames arrive at all.
 POLL_INTERVAL = 5.0
+
+
+def _parse_frame(raw: str) -> dict[str, Any] | None:
+    """Return the data payload of a live frame, or None if unusable."""
+    try:
+        parsed = json.loads(raw)
+    except ValueError:
+        _LOGGER.debug("Live frame is not JSON: %s", raw[:120])
+        return None
+
+    if not isinstance(parsed, dict):
+        return None
+
+    data = parsed.get("data")
+    return data if isinstance(data, dict) else None
 
 
 class ObiLiveMode:
@@ -197,7 +213,7 @@ class ObiLiveMode:
                     continue
 
                 if message.type is aiohttp.WSMsgType.TEXT:
-                    self._apply(self.api.parse_live_frame(message.data))
+                    self._apply(_parse_frame(message.data))
                 elif message.type in (
                     aiohttp.WSMsgType.CLOSE,
                     aiohttp.WSMsgType.CLOSED,
