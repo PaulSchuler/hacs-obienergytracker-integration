@@ -36,39 +36,19 @@
       "feed_in_meter_reading": {
         "name": "Zählerstand Netzeinspeisung"
       },
-      "battery_level": {
-        "name": "Batteriestand"
-      },
-      "is_online": {
-        "name": "Online-Status"
-      },
-      "connection_strength": {
-        "name": "Verbindungsstärke"
-      },
-      "last_record_received_at": {
-        "name": "Letzter Datensatz empfangen um"
-      },
-      "live_power": {
-        "name": "Aktuelle Leistung (Live)"
-      }
-    },
-    "switch": {
-      "live_mode": {
-        "name": "Live-Modus"
-      }
-    }
-  },
-  "options": {
-    "step": {
-      "init": {
-        "title": "Live-Modus",
-        "data": {
-          "live_timeout": "Timeout (s)"
-        },
-        "data_description": {
-          "live_timeout": "Sekunden, nach denen der Live-Modus sich selbst abschaltet. 0 bedeutet kein Zeitlimit - der Sensor sendet dann dauerhaft alle zwei Sekunden und die Batterie leert sich entsprechend schnell."
-        }
-      }
+       "battery_level": {
+         "name": "Batteriestand"
+       },
+       "is_online": {
+         "name": "Online-Status"
+       },
+       "connection_strength": {
+         "name": "Verbindungsstärke"
+       },
+       "last_record_received_at": {
+         "name": "Letzter Datensatz empfangen um"
+       }
     }
   }
 }
+

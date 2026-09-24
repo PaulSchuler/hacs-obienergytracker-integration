@@ -16,14 +16,7 @@ from homeassistant.config_entries import (
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 
 from .api import ObiEnergyTrackerAPI
-from .const import (
-    CONF_BRIDGE_ID,
-    CONF_COUNTRY,
-    CONF_DEVICE_ID,
-    CONF_LIVE_TIMEOUT,
-    DEFAULT_LIVE_TIMEOUT,
-    DOMAIN,
-)
+from .const import CONF_BRIDGE_ID, CONF_COUNTRY, CONF_DEVICE_ID, DOMAIN
 from .session import async_create_obi_session
 
 _LOGGER = logging.getLogger(__name__)
@@ -105,17 +98,4 @@ class ObiEnergyTrackerOptionsFlow(OptionsFlow):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Manage the options."""
-        if user_input is not None:
-            return self.async_create_entry(data=user_input)
-
-        current = self.config_entry.options.get(
-            CONF_LIVE_TIMEOUT, DEFAULT_LIVE_TIMEOUT
-        )
-        schema = vol.Schema(
-            {
-                vol.Optional(CONF_LIVE_TIMEOUT, default=current): vol.All(
-                    vol.Coerce(int), vol.Range(min=0, max=86400)
-                )
-            }
-        )
-        return self.async_show_form(step_id="init", data_schema=schema)
+        return self.async_show_form(step_id="init")
